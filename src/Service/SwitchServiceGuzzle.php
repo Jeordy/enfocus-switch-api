@@ -21,7 +21,7 @@ class SwitchServiceGuzzle
      * Generate encrypted password
      *
      * @param string $password
-     * @return string
+     * @return string|null
      */
     private function generateEncryptedPassword($password): ?string
     {
@@ -40,7 +40,7 @@ class SwitchServiceGuzzle
      *
      * @param string $username
      * @param string $password
-     * @return string
+     * @return string|null
      */
     public function login($username, $password): ?string
     {

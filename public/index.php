@@ -7,9 +7,11 @@ require __DIR__.'/../vendor/autoload.php';
 use App\Service\SwitchServiceCurl;
 use App\Service\SwitchServiceGuzzle;
 
-$switch = new SwitchServiceCurl();
 $username = 'demo';
 $password = 'demo';
+
+/* Example with CURL */
+$switch = new SwitchServiceCurl();
 
 // Login and get token from Switch Server
 $result = $switch->login($username, $password);
@@ -20,10 +22,8 @@ echo '<pre>';
 echo 'Example with CURL:<br />';
 var_dump($token);
 
-
+/* Example with GUZZLE */
 $switch = new SwitchServiceGuzzle();
-$username = 'demo';
-$password = 'demo';
 
 // Login and get token from Switch Server
 $result = $switch->login($username, $password);

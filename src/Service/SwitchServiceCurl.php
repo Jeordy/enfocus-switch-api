@@ -10,6 +10,7 @@ class SwitchServiceCurl
 {
     private const SSL_KEY = __DIR__.'/../Key/public.key';
 
+    // Enfocus Switch ip address with port number
     private const SERVER_IP = '127.0.0.1:51088';
 
     private const LOGIN = 'login';
@@ -18,7 +19,7 @@ class SwitchServiceCurl
      * Generate encrypted password
      *
      * @param string $password
-     * @return string
+     * @return string|null
      */
     private function generateEncryptedPassword($password): ?string
     {
@@ -37,7 +38,7 @@ class SwitchServiceCurl
      *
      * @param string $username
      * @param string $password
-     * @return string
+     * @return string|null
      */
     public function login($username, $password): ?string
     {
