@@ -2,15 +2,20 @@
 
 namespace App\Service;
 
-class SwitchService
+use GuzzleHttp\Client;
+
+/**
+ * @class SwitchServiceGuzzle
+ * Example class using curl_exec
+ */
+class SwitchServiceGuzzle
 {
     private const SSL_KEY = __DIR__.'/../Key/public.key';
 
-    private const SERVER_IP = '127.0.0.1';
+    // Enfocus Switch ip address with port number
+    private const SERVER_IP = '127.0.0.1:51088';
 
-    private const SERVER_PORT = '51088';
-
-    private const LOGIN = 'login';
+    private const LOGIN = '/login';
 
     /**
      * Generate encrypted password
@@ -44,26 +49,10 @@ class SwitchService
             'password' => $this->generateEncryptedPassword($password)
         ]);
 
-        // create a new curl resource
-        $ch = curl_init();
+        $client = new Client(['base_uri' => self::SERVER_IP]);
 
-        // set URL and other appropriate options
-        curl_setopt($ch, CURLOPT_URL, self::SERVER_IP . ':' . self::SERVER_PORT . '/' . self::LOGIN);
-        curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json'
-        ]);
-        // Add the json body
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonBody); 
+        $result = $client->request('POST', self::LOGIN, ['body' => $jsonBody]);
 
-        // Execute the curl resource
-        $result = curl_exec($ch);
-
-        // close curl resource, and free up system resources
-        curl_close($ch);
-
-        return $result;
+        return $result->getBody()->getContents();
     }
 }
