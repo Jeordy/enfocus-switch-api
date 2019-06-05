@@ -15,18 +15,5 @@ The recommended way to install this bundle with dependencies is through
 [Composer](http://getcomposer.org).
 
 ```bash
-# Install Composer
-curl -sS https://getcomposer.org/installer | php
-```
-
-Next, run the Composer command to install the dependencies
-
-```bash
-php composer.phar install
-```
-
-You can then later update dependencies using composer:
-
-```bash
-php composer.phar update
+php composer.phar update | composer install
 ```

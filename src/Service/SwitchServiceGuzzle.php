@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\MultipartStream;
 
 /**
  * @class SwitchServiceGuzzle
@@ -16,6 +17,12 @@ class SwitchServiceGuzzle
     private const SERVER_IP = '127.0.0.1:51088';
 
     private const LOGIN = '/login';
+
+    private const SUBMIT_POINTS = '/api/v1/submitpoints';
+
+    private const JOB_SUBMIT = '/api/v1/job';
+
+    private const TEST_FILE = __DIR__.'/../Files/On_Page_SEO_Checklist_Backlinko.pdf';
 
     /**
      * Generate encrypted password
@@ -52,6 +59,93 @@ class SwitchServiceGuzzle
         $client = new Client(['base_uri' => self::SERVER_IP]);
 
         $result = $client->request('POST', self::LOGIN, ['body' => $jsonBody]);
+
+        return $result->getBody()->getContents();
+    }
+
+    /**
+     * List all Submitpoints
+     *
+     * @param string $token
+     * @return string|null
+     */
+    public function listSubmitPoints($token): ?string
+    {
+        $client = new Client(['base_uri' => self::SERVER_IP]);
+
+        $result = $client->request('GET', self::SUBMIT_POINTS, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token
+            ]
+        ]);
+
+        return $result->getBody()->getContents();
+    }
+
+    /**
+     * Submit file to Switch
+     *
+     * @param string $token
+     * @param string $submitPoint
+     * @return string|null
+     */
+    public function jobSubmit($token, $submitPoint): ?string
+    {
+        $boundary = '----WebKitFormBoundaryrGXxz3Kn1K5R3kAB';
+
+        $submitPoint = \json_decode($submitPoint, true);
+        
+        $file = file_get_contents(self::TEST_FILE);
+
+        $client = new Client(['base_uri' => self::SERVER_IP]);
+
+        // Create multipart info array for Switch Submitpoint
+        $multipart = [
+            [
+                'Content-Disposition' => 'form-data',
+                'name' => 'flowId',
+                'contents' => $submitPoint[0]['flowId'],
+            ],
+            [
+                'Content-Disposition' => 'form-data',
+                'name' => 'objectId',
+                'contents' => $submitPoint[0]['objectId'],
+            ],
+            // [
+            //     'Content-Disposition' => 'form-data',
+            //     'name' => 'jobName',
+            //     'contents' => 'On_Page_SEO_Checklist_Backlinko.pdf',
+            // ],
+            [
+                'Content-Disposition' => 'form-data',
+                'name' => 'file[0][path]',
+                'contents' => 'On_Page_SEO_Checklist_Backlinko.pdf',
+            ],
+            [
+                'Content-Disposition' => 'form-data',
+                'name' => 'file[0][file]',
+                'filename' => 'On_Page_SEO_Checklist_Backlinko.pdf',
+                'Content-Type' => 'application/pdf',
+                'contents' => $file,
+            ]
+        ];
+
+        $result = $client->request('POST', self::JOB_SUBMIT, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type' => 'multipart/form-data; ' . $boundary,
+            ],
+            'debug' => true,
+            'body' => new MultipartStream($multipart, $boundary),
+        ]);
+
+        $statusCode = $result->getStatusCode();
+
+        if ($statusCode != 200)
+        {
+            echo 'Error processing orderline to Switch.' . $statusCode;
+            exit;
+        }
 
         return $result->getBody()->getContents();
     }

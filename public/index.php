@@ -19,8 +19,15 @@ $array = json_decode($result, true);
 $token = $array['token'];
 
 echo '<pre>';
-echo 'Example with CURL:<br />';
-var_dump($token);
+echo '<strong>Example with CURL:</strong><br />';
+var_dump('Token from login: ' . $token);
+echo '<strong>Submit points:</strong><br />';
+$submitPoint = $switch->listSubmitPoints($token);
+var_dump(json_decode($submitPoint));
+
+var_dump($switch->jobSubmit($token, $submitPoint));
+
+echo '<hr />';
 
 /* Example with GUZZLE */
 $switch = new SwitchServiceGuzzle();
@@ -31,5 +38,10 @@ $array = json_decode($result, true);
 $token = $array['token'];
 
 echo '<pre>';
-echo 'Example with GUZZLE:<br />';
-var_dump($token);
+echo '<strong>Example with GUZZLE:</strong><br />';
+var_dump('Token from login: ' . $token);
+echo '<strong>Submit points:</strong><br />';
+$submitPoint = $switch->listSubmitPoints($token);
+var_dump(json_decode($submitPoint));
+
+var_dump($switch->jobSubmit($token, $submitPoint));
