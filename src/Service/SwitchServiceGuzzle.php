@@ -3,7 +3,6 @@
 namespace App\Service;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\MultipartStream;
 
 /**
  * @class SwitchServiceGuzzle
@@ -14,7 +13,7 @@ class SwitchServiceGuzzle
     private const SSL_KEY = __DIR__.'/../Key/public.key';
 
     // Enfocus Switch ip address with port number
-    private const SERVER_IP = '127.0.0.1:51088';
+    private const SERVER_IP = 'http://localhost:51088';
 
     private const LOGIN = '/login';
 
@@ -89,7 +88,7 @@ class SwitchServiceGuzzle
      * @param string $submitPoint
      * @return string|null
      */
-    public function jobSubmit($token, $submitPoint): ?string
+    public function jobSubmit($token, $submitPoint = null): ?string
     {
         $boundary = '----WebKitFormBoundaryrGXxz3Kn1K5R3kAB';
 
@@ -97,32 +96,27 @@ class SwitchServiceGuzzle
         
         $file = file_get_contents(self::TEST_FILE);
 
-        $client = new Client(['base_uri' => self::SERVER_IP]);
+        $client = new Client();
 
-        // Create multipart info array for Switch Submitpoint
+        // Create multipart array for Switch Submitpoint
         $multipart = [
             [
-                'Content-Disposition' => 'form-data',
                 'name' => 'flowId',
                 'contents' => $submitPoint[0]['flowId'],
             ],
             [
-                'Content-Disposition' => 'form-data',
                 'name' => 'objectId',
                 'contents' => $submitPoint[0]['objectId'],
             ],
-            // [
-            //     'Content-Disposition' => 'form-data',
-            //     'name' => 'jobName',
-            //     'contents' => 'On_Page_SEO_Checklist_Backlinko.pdf',
-            // ],
             [
-                'Content-Disposition' => 'form-data',
+                'name' => 'jobName',
+                'contents' => 'On_Page_SEO_Checklist_Backlinko.pdf',
+            ],
+            [
                 'name' => 'file[0][path]',
                 'contents' => 'On_Page_SEO_Checklist_Backlinko.pdf',
             ],
             [
-                'Content-Disposition' => 'form-data',
                 'name' => 'file[0][file]',
                 'filename' => 'On_Page_SEO_Checklist_Backlinko.pdf',
                 'Content-Type' => 'application/pdf',
@@ -130,14 +124,20 @@ class SwitchServiceGuzzle
             ]
         ];
 
-        $result = $client->request('POST', self::JOB_SUBMIT, [
+        $result = $client->request('POST', self::SERVER_IP . self::JOB_SUBMIT, [
             'headers' => [
                 'Authorization' => 'Bearer ' . $token,
                 'Content-Type' => 'multipart/form-data; ' . $boundary,
             ],
+            'exceptions' => false,
             'debug' => true,
-            'body' => new MultipartStream($multipart, $boundary),
+            'multipart' => $multipart,
         ]);
+
+        $body = $result->getBody();
+        while (!$body->eof()) {
+            echo $body->read(1024);
+        }
 
         $statusCode = $result->getStatusCode();
 
