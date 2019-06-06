@@ -3,6 +3,8 @@
 namespace App\Service;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\MultipartStream;
 
 /**
  * @class SwitchServiceGuzzle
@@ -13,7 +15,7 @@ class SwitchServiceGuzzle
     private const SSL_KEY = __DIR__.'/../Key/public.key';
 
     // Enfocus Switch ip address with port number
-    private const SERVER_IP = 'http://localhost:51088';
+    private const SERVER_IP = 'http://127.0.0.1:51088';
 
     private const LOGIN = '/login';
 
@@ -93,8 +95,6 @@ class SwitchServiceGuzzle
         $boundary = '----WebKitFormBoundaryrGXxz3Kn1K5R3kAB';
 
         $submitPoint = \json_decode($submitPoint, true);
-        
-        $file = file_get_contents(self::TEST_FILE);
 
         $client = new Client();
 
@@ -120,14 +120,13 @@ class SwitchServiceGuzzle
                 'name' => 'file[0][file]',
                 'filename' => 'On_Page_SEO_Checklist_Backlinko.pdf',
                 'Content-Type' => 'application/pdf',
-                'contents' => $file,
+                'contents' => file_get_contents(self::TEST_FILE),
             ]
         ];
 
         $result = $client->request('POST', self::SERVER_IP . self::JOB_SUBMIT, [
             'headers' => [
-                'Authorization' => 'Bearer ' . $token,
-                'Content-Type' => 'multipart/form-data; ' . $boundary,
+                'Authorization' => 'Bearer ' . $token
             ],
             'exceptions' => false,
             'debug' => true,
