@@ -25,7 +25,7 @@ class SwitchServiceGuzzle
 
     private const FILE_PATH = __DIR__.'/../Files/';
 
-    private const FILE_NAME = 'Guzzle_On_Page_SEO_Checklist_Backlinko.pdf';
+    private const FILE_NAME = 'guzzle_test_file.pdf';
 
     /**
      * Generate encrypted password
