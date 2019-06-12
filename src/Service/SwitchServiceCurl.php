@@ -19,7 +19,9 @@ class SwitchServiceCurl
 
     private const JOB_SUBMIT = '/api/v1/job';
 
-    private const TEST_FILE = __DIR__.'/../Files/On_Page_SEO_Checklist_Backlinko.pdf';
+    private const FILE_PATH = __DIR__.'/../Files/';
+
+    private const FILE_NAME = 'Curl_On_Page_SEO_Checklist_Backlinko.pdf';
 
     /**
      * Generate encrypted password
@@ -116,64 +118,48 @@ class SwitchServiceCurl
     {
         $submitPoint = json_decode($submitPoint, true);
 
-        $boundary = '----WhatEverBoundaryYouWant';
+        $eol = "\r\n";
+        $boundary=md5(time());
 
-        // create a new curl resource
-        $ch = curl_init();
+        $fileContent= file_get_contents(self::FILE_PATH . self::FILE_NAME);
+        
+        // Create the POST body text
+        $data = '';
 
-        // set URL and other appropriate options
-        curl_setopt($ch, CURLOPT_URL, self::SERVER_IP . self::JOB_SUBMIT);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Authorization: Bearer ' . $token,
-            // Niet per se nodig: 'Content-Type: multipart/form-data; boundary=' . $boundary
-        ]);
-            
-        // Create multipart array for Switch Submitpoint
-        $multipart = [
-            [
-                'name' => 'flowId',
-                'contents' => $submitPoint[0]['flowId'],
-            ],
-            [
-                'name' => 'objectId',
-                'contents' => $submitPoint[0]['objectId'],
-            ],
-            [
-                'name' => 'jobName',
-                'contents' => 'On_Page_SEO_Checklist_Backlinko.pdf',
-            ],
-            [
-                'name' => 'file[0][path]',
-                'contents' => 'On_Page_SEO_Checklist_Backlinko.pdf',
-            ],
-            [
-                'name' => 'file[0][file]',
-                'filename' => 'On_Page_SEO_Checklist_Backlinko.pdf',
-                'Content-Type' => 'application/pdf',
-                'contents' => '@' . self::TEST_FILE
+        $data .= '--' . $boundary . $eol;
+        $data .= 'Content-Disposition: form-data; name="file"; filename="'. self::FILE_NAME .'"' . $eol;
+        $data .= 'Content-Type: application/pdf' . $eol;
+        $data .= $eol . $fileContent . $eol;
+        $data .= '--' . $boundary . $eol;
+        $data .= 'Content-Disposition: form-data; name="flowId"' . $eol . $eol;
+        $data .= $submitPoint[0]['flowId'] . $eol;
+        // $data .= '--' . $boundary . $eol;
+        // $data .= 'Content-Disposition: form-data; name="modified"' . $eol . $eol;
+        // $data .= $modified . $eol;
+        $data .= '--' . $boundary . $eol;
+        $data .= 'Content-Disposition: form-data; name="objectId"' . $eol . $eol;
+        $data .= $submitPoint[0]['objectId'] . $eol;
+        $data .= '--' . $boundary . $eol;
+        $data .= 'Content-Disposition: form-data; name="filePath"' . $eol . $eol;
+        $data .= self::FILE_NAME . $eol;
+        $data .= '--' . $boundary . $eol;
+        $data .= 'Content-Disposition: form-data; name="jobName"' . $eol . $eol;
+        $data .= self::FILE_NAME . $eol;
+        $data .= "--" . $boundary . "--" . $eol . $eol;
+
+        //POST with file_get_contents
+	    $params = [
+            'http' => [
+                'method' => 'POST',
+                'header' => "Authorization: Bearer " . $token . "\r\n" .
+                'Content-Type: multipart/form-data; boundary=' . $boundary,
+                'content' => $data
             ]
         ];
-
-        // Add the body / multipart form
-        // Niet werkend: curl_setopt($ch, CURLOPT_POSTFIELDS, array($multipart));
-        // Niet werkend: curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($multipart));
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $multipart);
-        // Maakt geen verschil aan of uit: curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
+    
+        $ctx = stream_context_create($params);
+        $result = file_get_contents(self::SERVER_IP . self::JOB_SUBMIT, null, $ctx);
         
-        // Execute the curl resource
-        $result = curl_exec($ch);
-        
-        if(curl_errno($ch))
-        {
-            echo 'Curl error: ' . curl_error($ch);
-        }
-
-        // close curl resource, and free up system resources
-        curl_close($ch);
-
         return $result;
     }
 

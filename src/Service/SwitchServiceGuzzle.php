@@ -23,7 +23,9 @@ class SwitchServiceGuzzle
 
     private const JOB_SUBMIT = '/api/v1/job';
 
-    private const TEST_FILE = __DIR__.'/../Files/On_Page_SEO_Checklist_Backlinko.pdf';
+    private const FILE_PATH = __DIR__.'/../Files/';
+
+    private const FILE_NAME = 'Guzzle_On_Page_SEO_Checklist_Backlinko.pdf';
 
     /**
      * Generate encrypted password
@@ -94,7 +96,7 @@ class SwitchServiceGuzzle
     {
         $submitPoint = \json_decode($submitPoint, true);
 
-        $file = file_get_contents(self::TEST_FILE);
+        $fileContents = file_get_contents(self::FILE_PATH . self::FILE_NAME);
 
         $client = new Client();
 
@@ -110,17 +112,17 @@ class SwitchServiceGuzzle
             ],
             [
                 'name' => 'jobName',
-                'contents' => 'On_Page_SEO_Checklist_Backlinko.pdf',
+                'contents' => self::FILE_NAME,
             ],
             [
-                'name' => 'file[0][path]',
-                'contents' => 'On_Page_SEO_Checklist_Backlinko.pdf',
+                'name' => 'filePath',
+                'contents' => self::FILE_NAME,
             ],
             [
-                'name' => 'file[0][file]',
+                'name' => 'file',
                 'filename' => 'On_Page_SEO_Checklist_Backlinko.pdf',
                 'Content-Type' => 'application/pdf',
-                'contents' => $file,
+                'contents' => $fileContents,
             ]
         ];
 
