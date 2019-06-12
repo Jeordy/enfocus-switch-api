@@ -92,9 +92,9 @@ class SwitchServiceGuzzle
      */
     public function jobSubmit($token, $submitPoint = null): ?string
     {
-        $boundary = '----WebKitFormBoundaryrGXxz3Kn1K5R3kAB';
-
         $submitPoint = \json_decode($submitPoint, true);
+
+        $file = file_get_contents(self::TEST_FILE);
 
         $client = new Client();
 
@@ -120,7 +120,7 @@ class SwitchServiceGuzzle
                 'name' => 'file[0][file]',
                 'filename' => 'On_Page_SEO_Checklist_Backlinko.pdf',
                 'Content-Type' => 'application/pdf',
-                'contents' => file_get_contents(self::TEST_FILE),
+                'contents' => $file,
             ]
         ];
 
@@ -132,11 +132,6 @@ class SwitchServiceGuzzle
             'debug' => true,
             'multipart' => $multipart,
         ]);
-
-        $body = $result->getBody();
-        while (!$body->eof()) {
-            echo $body->read(1024);
-        }
 
         $statusCode = $result->getStatusCode();
 

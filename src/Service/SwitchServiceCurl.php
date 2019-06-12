@@ -11,7 +11,7 @@ class SwitchServiceCurl
     private const SSL_KEY = __DIR__.'/../Key/public.key';
 
     // Enfocus Switch ip address with port number
-    private const SERVER_IP = 'http://localhost:51088';
+    private const SERVER_IP = 'http://127.0.0.1:51088';
 
     private const LOGIN = '/login';
 
@@ -20,8 +20,6 @@ class SwitchServiceCurl
     private const JOB_SUBMIT = '/api/v1/job';
 
     private const TEST_FILE = __DIR__.'/../Files/On_Page_SEO_Checklist_Backlinko.pdf';
-
-    private $eol = "\r\n";
 
     /**
      * Generate encrypted password
@@ -38,7 +36,6 @@ class SwitchServiceCurl
         // Use openssl_public_encrypt for encrypting the password. Then use the $encrypted variable that holds the encoded password
         $ssl = openssl_public_encrypt($password , $encrypted , $key);
         // User password encrypted by the RSA algorithm with padding PKCS1, then converted to base64 and preceded by '!@$'
-        var_dump('!@$' . base64_encode($encrypted));
         return '!@$' . base64_encode($encrypted);
     }
 
@@ -117,61 +114,81 @@ class SwitchServiceCurl
      */
     public function jobSubmit($token, $submitPoint): ?string
     {
-        $boundary = '----WebKitFormBoundaryrGXxz3Kn1K5R3kAB';
-
         $submitPoint = json_decode($submitPoint, true);
-        
-        $file = file_get_contents(self::TEST_FILE);
 
-        ob_start();  
-        $out = fopen('php://output', 'w');
+        $boundary = '----WhatEverBoundaryYouWant';
 
         // create a new curl resource
         $ch = curl_init();
 
         // set URL and other appropriate options
-        curl_setopt($ch, CURLOPT_URL, self::SERVER_IP . self::JOB_SUBMIT . '/metadata');
-        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_URL, self::SERVER_IP . self::JOB_SUBMIT);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($ch, CURLOPT_POSTREDIR, 3);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: multipart/form-data; boundary='.$boundary,
             'Authorization: Bearer ' . $token,
-            'Accept: application/json'
+            // Niet per se nodig: 'Content-Type: multipart/form-data; boundary=' . $boundary
         ]);
-        curl_setopt($ch, CURLOPT_VERBOSE, true);  
-        curl_setopt($ch, CURLOPT_STDERR, $out); 
+            
+        // Create multipart array for Switch Submitpoint
+        $multipart = [
+            [
+                'name' => 'flowId',
+                'contents' => $submitPoint[0]['flowId'],
+            ],
+            [
+                'name' => 'objectId',
+                'contents' => $submitPoint[0]['objectId'],
+            ],
+            [
+                'name' => 'jobName',
+                'contents' => 'On_Page_SEO_Checklist_Backlinko.pdf',
+            ],
+            [
+                'name' => 'file[0][path]',
+                'contents' => 'On_Page_SEO_Checklist_Backlinko.pdf',
+            ],
+            [
+                'name' => 'file[0][file]',
+                'filename' => 'On_Page_SEO_Checklist_Backlinko.pdf',
+                'Content-Type' => 'application/pdf',
+                'contents' => '@' . self::TEST_FILE
+            ]
+        ];
 
-        // Create multipart for Switch Submitpoint
-        $multipart = $boundary . $this->eol . 'Content-Disposition=form-data; name="flowId";' . $this->eol . $this->eol . $submitPoint[0]['flowId'] . $this->eol;
-        $multipart .= $boundary . $this->eol . 'Content-Disposition=form-data; name="objectId";' . $this->eol . $this->eol . $submitPoint[0]['objectId'] . $this->eol;
-        $multipart .= $boundary . $this->eol . 'Content-Disposition=form-data; name="jobName";' . $this->eol . $this->eol . 'On_Page_SEO_Checklist_Backlinko.pdf' . $this->eol;
-        $multipart .= $boundary . $this->eol . 'Content-Disposition=form-data; name="file[0][path]";' . $this->eol . $this->eol . 'On_Page_SEO_Checklist_Backlinko.pdf' . $this->eol;
-        $multipart .= $boundary . $this->eol . 'Content-Disposition=form-data; name="file[0][file]"; filename=On_Page_SEO_Checklist_Backlinko.pdf; Content-Type=application/pdf;' . $this->eol . $this->eol . $file . $this->eol;
-
-        // Add the json body
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $multipart); 
+        // Add the body / multipart form
+        // Niet werkend: curl_setopt($ch, CURLOPT_POSTFIELDS, array($multipart));
+        // Niet werkend: curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($multipart));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $multipart);
+        // Maakt geen verschil aan of uit: curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
         
         // Execute the curl resource
         $result = curl_exec($ch);
-
-        // $info = curl_getinfo($ch);
-        // var_dump($info);
-        //print_r($info['request_header']);
-        // $err = curl_error($ch);
-        // var_dump($err);
-
-        fclose($out);  
-        $debug = ob_get_clean();
-
-        var_dump($debug);
+        
+        if(curl_errno($ch))
+        {
+            echo 'Curl error: ' . curl_error($ch);
+        }
 
         // close curl resource, and free up system resources
         curl_close($ch);
 
         return $result;
     }
+
+    protected function multipartBuildQuery($fields, $boundary)
+    {
+        $retval = '';
+        
+        foreach($fields as $field)
+        {
+            $name = $field['name'];
+            $contents = $field['contents'];
+            $retval .= "$boundary\nContent-Disposition: form-data; name=\"$name\"\r\n\r\n$contents\n";
+        }
+        $retval .= "$boundary";
+
+        return $retval;
+      }
 }
